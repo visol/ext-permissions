@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.0" xmlns:t3="http://typo3.org/schemas/xliff">
+	<file source-language="en" datatype="plaintext" original="messages" product-name="permissions" target-language="de">
+		<header/>
+		<body>
+			<trans-unit id="title">
+				<target>Berechtigungen (rekursiv) setzen</target>
+			</trans-unit>
+			<trans-unit id="group">
+				<target>Benutzergruppe</target>
+			</trans-unit>
+			<trans-unit id="setGroup">
+				<target>Benutzergruppe setzen</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

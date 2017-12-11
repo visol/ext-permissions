@@ -19,13 +19,13 @@ $EM_CONF[$_EXTKEY] = [
     'author' => 'Lorenz Ulrich',
     'author_email' => 'lorenz.ulrich@visol.ch',
     'author_company' => 'visol digitale Dienstleistungen GmbH',
-    'version' => '1.0.0',
+    'version' => '2.0.0',
     'constraints' =>
         [
             'depends' =>
                 [
-                    'typo3' => '6.2.0-6.2.999',
-                    'func' => '6.2.0-6.2.999',
+                    'typo3' => '8.7.0-8.7.999',
+                    'func' => '8.7.0-8.7.999',
                 ],
             'conflicts' =>
                 [],

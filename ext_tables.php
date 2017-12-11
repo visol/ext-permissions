@@ -6,9 +6,8 @@ if (!defined('TYPO3_MODE')) {
 if (TYPO3_MODE === 'BE') {
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::insertModuleFunction(
         'web_func',
-        'Visol\\Permissions\\Controller\\ManagePermissionsModuleFunctionController',
+        \Visol\Permissions\Controller\ManagePermissionsModuleFunctionController::class,
         null,
-        "LLL:EXT:permissions/Resources/Private/Language/locallang_db.xml:moduleFunction.label",
-        'wiz'
+        "LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title"
     );
 }

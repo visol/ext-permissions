@@ -1,6 +1,5 @@
 <?php
 namespace Visol\Permissions\Controller;
-use TYPO3\CMS\Backend\Utility\BackendUtility;
 
 /***************************************************************
  *  Copyright notice
@@ -27,220 +26,222 @@ use TYPO3\CMS\Backend\Utility\BackendUtility;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
+
+use TYPO3\CMS\Backend\Tree\View\PageTreeView;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Core\Database\DatabaseConnection;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
+use TYPO3\CMS\Fluid\View\StandaloneView;
+
 class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule
 {
 
-    var $tree;
+    const PERMISSION_EDIT_PAGE = 2;
 
     /**
-     *    Adds menu items
-     *
-     * @return    array
-     * @ignore
+     * @return string
      */
-    public function modMenu()
+    public function main(): string
     {
-        $levelsLabel = $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_mod_web_perm.xlf:levels');
+        $id = $this->pObj->id;
+        $depth = GeneralUtility::_GP('depth') ?: 2;
+        $usergroup = GeneralUtility::_GP('usergroup');
 
-        return [
-            'tx_permissions_managepermissions_depth' => [
-                1 => '1 ' . $levelsLabel,
-                2 => '2 ' . $levelsLabel,
-                3 => '3 ' . $levelsLabel,
-                4 => '4 ' . $levelsLabel,
-                10 => '10 ' . $levelsLabel
-            ]
-        ];
-    }
-
-    /**
-     * Main function creating the content for the module.
-     *
-     * @return    string        HTML content for the module, actually a "section" made through the parent object in
-     *     $this->pObj
-     */
-    public function main()
-    {
-        $GLOBALS['LANG']->includeLLFile('EXT:permissions/Resources/Private/Language/locallang.xml');
-        define('TYPO3_MOD_PATH', 'sysext/func/mod1/');
-
-        $this->getPageTree();
-
-        // title
-        $theOutput = $this->pObj->doc->spacer(5);
-        $theOutput .= $this->pObj->doc->section($GLOBALS['LANG']->getLL('title'), '', 0, 1);
-
-        // depth menu
-        $menu = $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_mod_web_perm.xlf:Depth') . ': ' .
-            \TYPO3\CMS\Backend\Utility\BackendUtility::getFuncMenu($this->pObj->id,
-                'SET[tx_permissions_managepermissions_depth]',
-                $this->pObj->MOD_SETTINGS['tx_permissions_managepermissions_depth'],
-                $this->pObj->MOD_MENU['tx_permissions_managepermissions_depth']
-            );
-        $theOutput .= $this->pObj->doc->spacer(5);
-        $theOutput .= $this->pObj->doc->section('', $menu, 0, 1);
-
-        // output page tree
-        $theOutput .= $this->pObj->doc->spacer(10);
-        $theOutput .= $this->pObj->doc->section('', $this->showPageTree(), 0, 1);
-
-        // new form (close old)
-        $theOutput .= '</form>';
-        $theOutput .= $this->pObj->doc->spacer(10);
-
-        $theOutput .= '<form action="' . $GLOBALS['BACK_PATH'] . 'tce_db.php" method="POST" name="editform">';
-        $theOutput .= '<input type="hidden" name="id" value="' . $this->pObj->id . '">';
-        $theOutput .= '<input type="hidden" name="redirect" value="' . \TYPO3\CMS\Backend\Utility\BackendUtility::getModuleUrl('web_func') . '&id=' . $this->pObj->id . '">';
-
-        $theOutput .= \TYPO3\CMS\Backend\Form\FormEngine::getHiddenTokenField('tceAction');
-
-        $theOutput .= '<select name="data[pages][' . $this->pObj->id . '][perms_groupid]">';
-        $theOutput .= $this->getUsergroupSelectorOptions();
-        $theOutput .= '</select>';
-        $theOutput .= '<input type="hidden" name="mirror[pages][' . $this->pObj->id . ']" value="' . htmlspecialchars(implode(',',
-                $this->getRecursivePageIDArray())) . '">';
-
-        // submit buttons
-        $theOutput .= '<input type="submit" name="setGroup" value="' . $GLOBALS['LANG']->getLL('setGroup') . '" onclick="document.editform[\'data[pages][' . $this->pObj->id . '][no_search]\'].value=0;"> ';
-
-
-        return $theOutput;
-    }
-
-
-    public function showPageTree()
-    {
-        $tableLayout = [
-            'table' => ['<table class="typo3-dblist" style="width:auto;"><tbody>', '</tbody></table>'],
-            '0' => [
-                'tr' => ['<tr class="t3-row-header">', '</tr>'],
-                '0' => ['<td nowrap="nowrap">', '</td>'],
-                '1' => ['<td nowrap="nowrap">', '</td>'],
-            ],
-            'defRow' => [
-                'tr' => ['<tr class="db_list_normal">', '</tr>'],
-                '0' => ['<td nowrap="nowrap">', '</td>'],
-                '1' => ['<td nowrap="nowrap">&nbsp;&nbsp;', '&nbsp;&nbsp;</td>'],
-            ]
-        ];
-
-        $table = [];
-        $tr = 0;
-        $table[$tr][0] = '';
-        $table[$tr][1] = '<strong>' . $GLOBALS['LANG']->getLL('group') . ':</strong>';
-        $tr++;
-        foreach ($this->tree->tree as $pageItem) {
-            if (!($this->admin || $GLOBALS['BE_USER']->doesUserHaveAccess($pageItem['row'], $perms))) {
-                $tableLayout[$tr]['tr'] = ['<tr class="bgColor4-20">', '</tr>'];
-            }
-
-            $title = \TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($this->tree->getTitleStr($pageItem['row']),
-                $GLOBALS['BE_USER']->uc['titleLen']);
-            $treeItem = $pageItem['HTML'] . $this->tree->wrapTitle($title, $pageItem['row']);
-
-            $table[$tr][0] = $treeItem . '&nbsp;';
-
-            $usergroupName = $this->getUsergroupNameForPage($pageItem['row']);
-            $table[$tr++][1] = $usergroupName;
+        if ($usergroup) {
+            // change usergroup
+            $uids = $this->getRecursivePageUids($id, $depth);
+            $this->setUsergroupValue($uids, $usergroup);
         }
 
-        return $this->pObj->doc->table($table, $tableLayout);
+        $view = GeneralUtility::makeInstance(StandaloneView::class);
+        $view->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName(
+            'EXT:permissions/Resources/Private/Templates/Index.html'
+        ));
+
+        $view->assign('depth', $depth);
+
+        $depthBaseUrl = BackendUtility::getModuleUrl(
+            'web_func',
+            [
+                'SET' => [
+                    'function' => self::class,
+                ],
+                'id' => $id,
+                'depth' => '__DEPTH__',
+            ]
+        );
+        $view->assign('depthBaseUrl', $depthBaseUrl);
+
+        $idBaseUrl = BackendUtility::getModuleUrl(
+            'web_func',
+            [
+                'SET' => [
+                    'function' => self::class,
+                ],
+                'depth' => $depth,
+            ]
+        );
+        $view->assign('idBaseUrl', $idBaseUrl);
+
+        $cmdBaseUrl = BackendUtility::getModuleUrl(
+            'web_func',
+            [
+                'SET' => [
+                    'function' => self::class,
+                ],
+                'id' => $id,
+                'depth' => $depth,
+            ]
+        );
+        $view->assign('cmdBaseUrl', $cmdBaseUrl);
+
+        $depthOptions = [];
+        foreach ([1, 2, 3, 4, 10] as $depthLevel) {
+            $levelLabel = $depthLevel === 1 ? 'level' : 'levels';
+            $depthOptions[$depthLevel] = $depthLevel . ' ' . LocalizationUtility::translate('LLL:EXT:beuser/Resources/Private/Language/locallang_mod_permission.xlf:' . $levelLabel,
+                    'beuser');
+        }
+        $view->assign('depthOptions', $depthOptions);
+
+        $view->assign('LLPrefix', 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:');
+
+        $tree = $this->getPageTree($id, $depth);
+        $view->assign('viewTree', $tree->tree);
+
+        $view->assign('usergroups', $this->getUsergroups());
+
+        return $view->render();
     }
-
-
-    /**
-     * Reads the page tree
-     *
-     * @return    void
-     */
-    public function getPageTree()
-    {
-        $this->tree = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Visol\Permissions\Service\PageTreeView');
-        $this->tree->init(' AND ' . $this->pObj->perms_clause);
-        $this->tree->setRecs = 1;
-        $this->tree->makeHTML = true;
-        $this->tree->thisScript = 'index.php';
-        $this->tree->addField('no_search');
-        $this->tree->addField('perms_userid', 1);
-        $this->tree->addField('perms_groupid', 1);
-        $this->tree->addField('perms_user', 1);
-        $this->tree->addField('perms_group', 1);
-        $this->tree->addField('perms_everybody', 1);
-
-        // set Root icon
-        $HTML = '<img src="' . $GLOBALS['BACK_PATH'] . \TYPO3\CMS\Backend\Utility\IconUtility::getIcon('pages',
-                $this->pObj->pageinfo) . '" title="' . \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordIconAltText($this->pObj->pageinfo,
-                $this->tree->table) . '" width="18" height="16" align="top">';
-        $this->tree->tree[] = ['row' => $this->pObj->pageinfo, 'HTML' => $HTML];
-
-        $this->tree->getTree($this->pObj->id, $this->pObj->MOD_SETTINGS['tx_permissions_managepermissions_depth'], '');
-    }
-
 
     /**
      * Return an array of page id's where the user have access to
      *
-     * @return    array    pages uid array
+     * @param $id
+     * @param $depth
+     *
+     * @return array
      */
-    public function getRecursivePageIDArray()
+    protected function getRecursivePageUids($id, $depth): array
     {
-        $theIdListArr = [];
+        $tree = $this->getPageTree($id, $depth);
 
-        if ($GLOBALS['BE_USER']->user['uid'] && count($this->tree->ids_hierarchy)) {
-            reset($this->tree->ids_hierarchy);
-            $theIdListArr = [];
-            for ($a = $this->pObj->MOD_SETTINGS['tx_permissions_managepermissions_depth']; $a > 0; $a--) {
-                if (is_array($this->tree->ids_hierarchy[$a])) {
-                    reset($this->tree->ids_hierarchy[$a]);
-                    while (list(, $theId) = each($this->tree->ids_hierarchy[$a])) {
-                        if ($this->admin || $GLOBALS['BE_USER']->doesUserHaveAccess($this->tree->tree[$theId]['row'],
-                                $perms)
-                        ) {
-                            $theIdListArr[] = $theId;
+        $uidList = [];
+
+        if ($this->checkPermissionsForRow($tree->tree[$id]['row'])) {
+            $uidList[] = $id;
+        }
+
+        if ($this->getBackendUser()->user['uid'] && count($tree->ids_hierarchy)) {
+            reset($tree->ids_hierarchy);
+
+            for ($a = $depth; $a > 0; $a--) {
+                if (is_array($tree->ids_hierarchy[$a])) {
+                    reset($tree->ids_hierarchy[$a]);
+                    while (list(, $theId) = each($tree->ids_hierarchy[$a])) {
+                        if ($this->checkPermissionsForRow($tree->tree[$theId]['row'])) {
+                            $uidList[] = $theId;
                         }
                     }
-                    $lKey = $getLevels - $a + 1;
                 }
             }
         }
 
-        return $theIdListArr;
+        return $uidList;
+
     }
 
     /**
-     * Returns the title of a backend usergroup from a page row
+     * Reads the page tree
      *
-     * @param $page
-     *
-     * @return string
+     * @return PageTreeView
      */
-    public function getUsergroupNameForPage($page)
+    protected function getPageTree($id, $depth): PageTreeView
     {
-        $usergroupUid = $page['perms_groupid'];
-        $whereClause = 'uid=' . $usergroupUid . BackendUtility::deleteClause('be_groups') . BackendUtility::BEenableFields('be_groups');
-        $row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow('title', 'be_groups', $whereClause);
+        /** @var PageTreeView $tree */
+        $tree = GeneralUtility::makeInstance(PageTreeView::class);
+        $tree->init(' AND ' . $this->pObj->perms_clause);
+        $tree->setRecs = 1;
+        $tree->makeHTML = true;
+        $tree->thisScript = 'index.php';
+        $tree->addField('perms_groupid');
 
-        return $row['title'];
+        if ($id) {
+            $pageInfo = BackendUtility::readPageAccess($id, ' 1=1');
+            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getIcon($id)];
+        } else {
+            $pageInfo = ['title' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'], 'uid' => 0, 'pid' => 0];
+            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getRootIcon($pageInfo)];
+        }
+
+        $tree->getTree($id, $depth, '');
+
+        return $tree;
+    }
+
+    protected function checkPermissionsForRow($row): bool
+    {
+        if ($this->getBackendUser()->isAdmin()) {
+            return true;
+        }
+
+        if ($this->getBackendUser()->doesUserHaveAccess($row, self::PERMISSION_EDIT_PAGE)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
+     */
+    protected function getBackendUser(): \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
+    {
+        return $GLOBALS['BE_USER'];
+    }
+
+    /**
+     * @return DatabaseConnection
+     */
+    protected function getDatabaseConnection()
+    {
+        return $GLOBALS['TYPO3_DB'];
+    }
+
+    /**
+     * @param array $uids
+     * @param $value
+     */
+    protected function setUsergroupValue(array $uids, $value)
+    {
+        $data = [];
+        foreach ($uids as $uid) {
+            $data['pages'][$uid]['perms_groupid'] = $value;
+        }
+
+        /** @var DataHandler $dataHandler */
+        $dataHandler = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(DataHandler::class);
+        $dataHandler->start($data, []);
+        $dataHandler->process_datamap();
     }
 
     /**
      * Get a select option for each user group
      *
-     * @return string
+     * @return array
      */
-    public function getUsergroupSelectorOptions()
+    public function getUsergroups(): array
     {
         /** @var \TYPO3\CMS\Core\Database\DatabaseConnection $databaseHandle */
         $databaseHandle = $GLOBALS['TYPO3_DB'];
         $whereClause = '1=1' . BackendUtility::deleteClause('be_groups') . BackendUtility::BEenableFields('be_groups');
         $rows = $databaseHandle->exec_SELECTgetRows('*', 'be_groups', $whereClause, '', 'title ASC');
-        $usergroupSelector = [];
+        $usergroupSelectorOptions = [];
         foreach ($rows as $row) {
-            $usergroupSelector[] = '<option value="' . $row['uid'] . '">' . $row['title'] . '</option>';
+            $usergroupSelectorOptions[$row['uid']] = $row['title'];
         }
 
-        return implode($usergroupSelector);
+        return $usergroupSelectorOptions;
     }
 }
-
-?>
