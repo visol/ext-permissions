@@ -27,42 +27,53 @@ namespace Visol\Permissions\Service;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-class PageTreeView extends \TYPO3\CMS\Backend\Tree\View\PageTreeView {
+class PageTreeView extends \TYPO3\CMS\Backend\Tree\View\PageTreeView
+{
 
-	/**
-	 * Wrapping $title in a-tags.
-	 * @param string $title
-	 * @param string $v
-	 * @return string
-	 */
-	public function wrapTitle($title, $v) {
-		$aOnClick = 'return jumpToUrl(\'index.php?id=' . $v['uid'] . '\',this);';
-		return '<a href="#" onclick="' . htmlspecialchars($aOnClick) . '">' . $title . '</a>';
-	}
+    /**
+     * Wrapping $title in a-tags.
+     *
+     * @param string $title
+     * @param string $v
+     *
+     * @return string
+     */
+    public function wrapTitle($title, $v)
+    {
+        $aOnClick = 'return jumpToUrl(\'index.php?id=' . $v['uid'] . '\',this);';
 
-	/**
-	 * Creates title attribute content for pages.
-	 * Uses API function in BackendUtility which will retrieve lots of useful information for pages.
-	 * @param array $row
-	 * @return string
-	 */
-	public function getTitleAttrib($row) {
-		return $iconAltText = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordIconAltText($row, $this->table);
-	}
+        return '<a href="#" onclick="' . htmlspecialchars($aOnClick) . '">' . $title . '</a>';
+    }
 
-	/**
-	 * Wrapping the image tag, $icon, for the row, $row (except for mount points)
-	 *
-	 * @param string $icon
-	 * @param array $row
-	 * @return string
-	 */
-	public function wrapIcon($icon, $row) {
-		// Add title attribute to input icon tag
-		$theIcon = $this->addTagAttributes($icon, ($this->titleAttrib ? $this->titleAttrib . '="' . $this->getTitleAttrib($row) . '"' : ''));
+    /**
+     * Creates title attribute content for pages.
+     * Uses API function in BackendUtility which will retrieve lots of useful information for pages.
+     *
+     * @param array $row
+     *
+     * @return string
+     */
+    public function getTitleAttrib($row)
+    {
+        return $iconAltText = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordIconAltText($row, $this->table);
+    }
 
-		return $theIcon;
-	}
+    /**
+     * Wrapping the image tag, $icon, for the row, $row (except for mount points)
+     *
+     * @param string $icon
+     * @param array $row
+     *
+     * @return string
+     */
+    public function wrapIcon($icon, $row)
+    {
+        // Add title attribute to input icon tag
+        $theIcon = $this->addTagAttributes($icon,
+            ($this->titleAttrib ? $this->titleAttrib . '="' . $this->getTitleAttrib($row) . '"' : ''));
+
+        return $theIcon;
+    }
 }
 
 ?>

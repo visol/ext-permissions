@@ -12,8 +12,8 @@
 		</languageKey>
 		<languageKey index="de" type="array">
 			<label index="title">Berechtigungen (rekursiv) setzen</label>
-            <label index="group">Benutzergruppe</label>
-            <label index="setGroup">Benutzergruppe setzen</label>
+			<label index="group">Benutzergruppe</label>
+			<label index="setGroup">Benutzergruppe setzen</label>
 		</languageKey>
 	</data>
 </T3locallang>
