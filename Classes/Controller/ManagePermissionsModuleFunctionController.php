@@ -168,7 +168,11 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
         $tree->setRecs = 1;
         $tree->makeHTML = true;
         $tree->thisScript = 'index.php';
+        $tree->addField('perms_userid');
+        $tree->addField('perms_user');
         $tree->addField('perms_groupid');
+        $tree->addField('perms_group');
+        $tree->addField('perms_everybody');
 
         if ($id) {
             $pageInfo = BackendUtility::readPageAccess($id, ' 1=1');
