@@ -42,6 +42,7 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
 
     /**
      * @return string
+     * @throws \Exception
      */
     public function main(): string
     {
@@ -122,14 +123,16 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
      * @param $depth
      *
      * @return array
+     * @throws \Exception
      */
     protected function getRecursivePageUids($id, $depth): array
     {
         $tree = $this->getPageTree($id, $depth);
+        $rows = $this->getRowsFromPageTree($tree);
 
         $uidList = [];
 
-        if ($this->checkPermissionsForRow($tree->tree[$id]['row'])) {
+        if ($this->checkPermissionsForRow($rows[$id])) {
             $uidList[] = $id;
         }
 
@@ -140,7 +143,7 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
                 if (is_array($tree->ids_hierarchy[$a])) {
                     reset($tree->ids_hierarchy[$a]);
                     while (list(, $theId) = each($tree->ids_hierarchy[$a])) {
-                        if ($this->checkPermissionsForRow($tree->tree[$theId]['row'])) {
+                        if ($this->checkPermissionsForRow($rows[$theId])) {
                             $uidList[] = $theId;
                         }
                     }
@@ -178,6 +181,37 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
         $tree->getTree($id, $depth, '');
 
         return $tree;
+    }
+
+
+    /**
+     * Get rows from PageTreeView. Use uid as key
+     *
+     * @param PageTreeView $tree
+     * @return array
+     * @throws \Exception
+     */
+    protected function getRowsFromPageTree(PageTreeView $tree): array
+    {
+        $rows = [];
+
+        foreach ($tree->tree as $treeItem) {
+            $uid = $treeItem['row']['uid'];
+            $row = $treeItem['row'];
+
+            if (!is_int($uid)) {
+                throw new \Exception ('Could not determine uid for treeItem', 1522933282);
+            }
+
+            if (!is_array($row)) {
+                throw new \Exception ('Could not find row data for treeItem', 1522933282);
+            }
+
+            $rows[$uid] = $row;
+        }
+
+        return $rows;
+
     }
 
     protected function checkPermissionsForRow($row): bool
