@@ -112,6 +112,7 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
         $view->assign('viewTree', $tree->tree);
 
         $view->assign('usergroups', $this->getUsergroups());
+        $view->assign('beusers', $this->getBackendUsers());
 
         return $view->render();
     }
@@ -280,5 +281,24 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
         }
 
         return $usergroupSelectorOptions;
+    }
+
+    /**
+     * Get a select option for each user group
+     *
+     * @return array
+     */
+    public function getBackendUsers(): array
+    {
+        /** @var \TYPO3\CMS\Core\Database\DatabaseConnection $databaseHandle */
+        $databaseHandle = $GLOBALS['TYPO3_DB'];
+        $whereClause = '1=1' . BackendUtility::deleteClause('be_users') . BackendUtility::BEenableFields('be_users');
+        $rows = $databaseHandle->exec_SELECTgetRows('*', 'be_users', $whereClause, '', 'username ASC');
+        $beUsers = [];
+        foreach ($rows as $row) {
+            $beUsers[$row['uid']] = $row['username'];
+        }
+
+        return $beUsers;
     }
 }

@@ -6,6 +6,7 @@
 </script>
 
 <h1><f:translate key="{LLPrefix}title"/></h1>
+<p><f:translate key="{LLPrefix}description"/></p>
 <div>
 
     <div class="form-group">
@@ -18,8 +19,9 @@
             <table class="table table-striped table-hover" id="typo3-permissionList">
                 <thead>
                 <tr>
-                    <th>&nbsp;</th>
-                    <th><f:translate key="{LLPrefix}searchable"/></th>
+                    <th><f:translate key="{LLPrefix}page"/></th>
+                    <th><f:translate key="{LLPrefix}owner"/></th>
+                    <th><f:translate key="{LLPrefix}group"/></th>
                 </tr>
                 </thead>
                 <f:for each="{viewTree}" as="data">
@@ -36,7 +38,9 @@
                                         {data.row.title -> f:format.crop(maxCharacters:40)}
                                     </a>
                                 </td>
-
+                                <td>
+                                    {beusers.{data.row.perms_userid}}
+                                </td>
                                 <td>
                                     {usergroups.{data.row.perms_groupid}}
                                 </td>

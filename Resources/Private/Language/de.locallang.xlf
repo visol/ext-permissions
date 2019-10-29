@@ -6,8 +6,17 @@
 			<trans-unit id="title">
 				<target>Berechtigungen (rekursiv) setzen</target>
 			</trans-unit>
+			<trans-unit id="description">
+				<target>Änderungen sind nur durch Besitzer*In der Seite(n) oder Benutzer mit Admin-Rechten möglich.</target>
+			</trans-unit>
+			<trans-unit id="page">
+				<target>Seite</target>
+			</trans-unit>
+			<trans-unit id="owner">
+				<target>Besitzer*In</target>
+			</trans-unit>
 			<trans-unit id="group">
-				<target>Benutzergruppe</target>
+				<target>Gruppe</target>
 			</trans-unit>
 			<trans-unit id="setGroup">
 				<target>Benutzergruppe setzen</target>

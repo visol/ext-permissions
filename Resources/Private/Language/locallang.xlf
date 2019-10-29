@@ -6,6 +6,15 @@
 			<trans-unit id="title">
 				<source>Set permissions (recursively)</source>
 			</trans-unit>
+			<trans-unit id="description">
+				<source>Changes only possible for page owner or any admin users.</source>
+			</trans-unit>
+			<trans-unit id="page">
+				<source>Page</source>
+			</trans-unit>
+			<trans-unit id="owner">
+				<source>Owner</source>
+			</trans-unit>
 			<trans-unit id="group">
 				<source>User group</source>
 			</trans-unit>
