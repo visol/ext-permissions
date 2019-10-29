@@ -19,7 +19,7 @@ $EM_CONF[$_EXTKEY] = [
     'author' => 'Lorenz Ulrich',
     'author_email' => 'lorenz.ulrich@visol.ch',
     'author_company' => 'visol digitale Dienstleistungen GmbH',
-    'version' => '2.0.1',
+    'version' => '2.0.2',
     'constraints' =>
         [
             'depends' =>
