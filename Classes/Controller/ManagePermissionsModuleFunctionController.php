@@ -138,11 +138,10 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
 
         if ($this->getBackendUser()->user['uid'] && count($tree->ids_hierarchy)) {
             reset($tree->ids_hierarchy);
-
             for ($a = $depth; $a > 0; $a--) {
                 if (is_array($tree->ids_hierarchy[$a])) {
                     reset($tree->ids_hierarchy[$a]);
-                    while (list(, $theId) = each($tree->ids_hierarchy[$a])) {
+                    foreach($tree->ids_hierarchy[$a] as $theId){
                         if ($this->checkPermissionsForRow($rows[$theId])) {
                             $uidList[] = $theId;
                         }
