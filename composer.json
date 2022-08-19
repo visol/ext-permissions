@@ -1,17 +1,22 @@
 {
-  "name": "visol/permissions",
-  "type": "typo3-cms-extension",
-  "description": "Web>Func, Wizards, Manage permissions",
-  "homepage": "https://github.com/visol/ext-permissions",
-  "license": [
-    "GPL-2.0+"
-  ],
-  "require": {
-    "typo3/cms-core": "~8.7.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Visol\\Permissions\\": "Classes/"
-    }
-  }
+	"name": "visol/permissions",
+	"type": "typo3-cms-extension",
+	"description": "Web>Func, Wizards, Manage permissions",
+	"homepage": "https://github.com/visol/ext-permissions",
+	"license": [
+		"GPL-2.0-or-later"
+	],
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "permissions"
+		}
+	},
+	"autoload": {
+		"psr-4": {
+			"Visol\\Permissions\\": "Classes/"
+		}
+	},
+	"require": {
+		"typo3/cms-core": "^11.5"
+	}
 }

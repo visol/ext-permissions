@@ -1,13 +1,13 @@
 <?php
 
-if (!defined('TYPO3_MODE')) {
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use Visol\Permissions\Controller\ManagePermissionsModuleFunctionController;
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
-if (TYPO3_MODE === 'BE') {
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::insertModuleFunction(
-        'web_func',
-        \Visol\Permissions\Controller\ManagePermissionsModuleFunctionController::class,
-        null,
-        "LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title"
-    );
-}
+ExtensionManagementUtility::insertModuleFunction(
+    'web_func',
+    ManagePermissionsModuleFunctionController::class,
+    null,
+    "LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title"
+);

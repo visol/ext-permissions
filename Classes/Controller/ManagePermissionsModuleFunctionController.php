@@ -26,7 +26,9 @@ namespace Visol\Permissions\Controller;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-
+use TYPO3\CMS\Backend\Routing\UriBuilder;
+use TYPO3\CMS\Backend\Module\AbstractFunctionModule;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\DatabaseConnection;
@@ -35,7 +37,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 
-class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule
+class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
 {
 
     const PERMISSION_EDIT_PAGE = 2;
@@ -63,39 +65,30 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
 
         $view->assign('depth', $depth);
 
-        $depthBaseUrl = BackendUtility::getModuleUrl(
-            'web_func',
-            [
-                'SET' => [
-                    'function' => self::class,
-                ],
-                'id' => $id,
-                'depth' => '__DEPTH__',
-            ]
-        );
+        $depthBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
+            'SET' => [
+                'function' => self::class,
+            ],
+            'id' => $id,
+            'depth' => '__DEPTH__',
+        ]);
         $view->assign('depthBaseUrl', $depthBaseUrl);
 
-        $idBaseUrl = BackendUtility::getModuleUrl(
-            'web_func',
-            [
-                'SET' => [
-                    'function' => self::class,
-                ],
-                'depth' => $depth,
-            ]
-        );
+        $idBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
+            'SET' => [
+                'function' => self::class,
+            ],
+            'depth' => $depth,
+        ]);
         $view->assign('idBaseUrl', $idBaseUrl);
 
-        $cmdBaseUrl = BackendUtility::getModuleUrl(
-            'web_func',
-            [
-                'SET' => [
-                    'function' => self::class,
-                ],
-                'id' => $id,
-                'depth' => $depth,
-            ]
-        );
+        $cmdBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
+            'SET' => [
+                'function' => self::class,
+            ],
+            'id' => $id,
+            'depth' => $depth,
+        ]);
         $view->assign('cmdBaseUrl', $cmdBaseUrl);
 
         $depthOptions = [];
@@ -234,7 +227,7 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
     /**
      * @return \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
      */
-    protected function getBackendUser(): \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
+    protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
     }
@@ -259,7 +252,7 @@ class ManagePermissionsModuleFunctionController extends \TYPO3\CMS\Backend\Modul
         }
 
         /** @var DataHandler $dataHandler */
-        $dataHandler = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(DataHandler::class);
+        $dataHandler = GeneralUtility::makeInstance(DataHandler::class);
         $dataHandler->start($data, []);
         $dataHandler->process_datamap();
     }
