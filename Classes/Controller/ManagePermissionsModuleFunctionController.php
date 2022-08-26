@@ -225,7 +225,7 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
     }
 
     /**
-     * @return \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
+     * @return BackendUserAuthentication
      */
     protected function getBackendUser(): BackendUserAuthentication
     {
