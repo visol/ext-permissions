@@ -5,13 +5,24 @@
     }
 </script>
 
-<h1><f:translate key="{LLPrefix}title"/></h1>
-<p><f:translate key="{LLPrefix}description"/></p>
+<h1>
+    <f:translate key="{LLPrefix}title"/>
+</h1>
+<p>
+    <f:translate key="{LLPrefix}description"/>
+</p>
 <div>
 
     <div class="form-group">
-        <label for="depth"><f:translate key="LLL:EXT:beuser/Resources/Private/Language/locallang_mod_permission.xlf:Depth" />:</label>
-        <f:form.select class="form-control" name="depth" id="depth" value="{depth}" options="{depthOptions}" additionalAttributes="{onchange: 'jumpToUrl(\'{depthBaseUrl}\'.replace(\'__DEPTH__\', this.options[this.selectedIndex].value), this);'}" />
+        <label for="depth">
+            <f:translate key="LLL:EXT:beuser/Resources/Private/Language/locallang_mod_permission.xlf:Depth"/>
+        </label>
+        <f:form.select class="form-control"
+                       name="depth"
+                       id="depth"
+                       value="{depth}"
+                       options="{depthOptions}"
+                       additionalAttributes="{onchange: 'jumpToUrl(\'{depthBaseUrl}\'.replace(\'__DEPTH__\', this.options[this.selectedIndex].value), this);'}"/>
     </div>
 
     <div class="panel panel-default panel-space">
@@ -19,9 +30,15 @@
             <table class="table table-striped table-hover" id="typo3-permissionList">
                 <thead>
                 <tr>
-                    <th><f:translate key="{LLPrefix}page"/></th>
-                    <th><f:translate key="{LLPrefix}owner"/></th>
-                    <th><f:translate key="{LLPrefix}group"/></th>
+                    <th>
+                        <f:translate key="{LLPrefix}page"/>
+                    </th>
+                    <th>
+                        <f:translate key="{LLPrefix}owner"/>
+                    </th>
+                    <th>
+                        <f:translate key="{LLPrefix}group"/>
+                    </th>
                 </tr>
                 </thead>
                 <f:for each="{viewTree}" as="data">
@@ -32,7 +49,7 @@
                                     A "normal" page row is rendered, not the root page
                                 </f:comment>
 
-                                <td align="left" class="nowrap">
+                                <td style="text-align: left" class="nowrap">
                                     <a href="{idBaseUrl}&id={data.row.uid}">
                                         <f:format.raw>{data.depthData}{data.HTML}</f:format.raw>
                                         {data.row.title -> f:format.crop(maxCharacters:40)}
@@ -64,9 +81,13 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <label for="usergroup"><f:translate key="{LLPrefix}group" />:</label>
-        <f:form.select class="form-control" name="usergroup" id="usergroup" options="{usergroups}" />
-        <button type="submit" class="btn btn-default">{f:translate(key: '{LLPrefix}setGroup')}</button>
-    </div>
+    <form action="{cmdBaseUrl}" method="post">
+        <div class="form-group">
+            <label for="usergroup">
+                <f:translate key="{LLPrefix}group"/>
+            </label>
+            <f:form.select class="form-control" name="usergroup" id="usergroup" options="{usergroups}"/>
+            <button type="submit" class="btn btn-default">{f:translate(key: '{LLPrefix}setGroup')}</button>
+        </div>
+    </form>
 </div>

@@ -1,61 +1,57 @@
 <?php
+
 namespace Visol\Permissions\Controller;
 
-/***************************************************************
- *  Copyright notice
- *
- *  (c) 2014 Lorenz Ulrich <lorenz.ulrich@visol.ch>
- *  All rights reserved
- *
- *  This script is part of the TYPO3 project. The TYPO3 project is
- *  free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  The GNU General Public License can be found at
- *  http://www.gnu.org/copyleft/gpl.html.
- *  A copy is found in the text file GPL.txt and important notices to the license
- *  from the author is found in LICENSE.txt distributed with these scripts.
- *
- *
- *  This script is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  This copyright notice MUST APPEAR in all copies of the script!
- ***************************************************************/
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
-use TYPO3\CMS\Backend\Module\AbstractFunctionModule;
-use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Backend\Template\ModuleTemplate;
+use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
-use TYPO3\CMS\Core\Database\DatabaseConnection;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
+use TYPO3\CMS\Core\Http\HtmlResponse;
+use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 
-class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
+class ManagePermissionsController
 {
-
     const PERMISSION_EDIT_PAGE = 2;
 
     /**
-     * @return string
-     * @throws \Exception
+     * ModuleTemplate object
+     *
+     * @var ModuleTemplate
      */
-    public function main(): string
-    {
-        $id = $this->pObj->id;
-        $depth = GeneralUtility::_GP('depth') ?: 2;
-        $usergroup = GeneralUtility::_GP('usergroup');
+    protected $moduleTemplate;
 
-        if ($usergroup) {
+    protected IconFactory $iconFactory;
+    protected ModuleTemplateFactory $moduleTemplateFactory;
+
+    public function __construct()
+    {
+        $this->iconFactory = GeneralUtility::makeInstance(IconFactory::class);
+        $this->moduleTemplateFactory = GeneralUtility::makeInstance(ModuleTemplateFactory::class);
+    }
+
+    public function mainAction(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->moduleTemplate = $this->moduleTemplateFactory->create($request);
+
+        $id = (int)$request->getQueryParams()['id'];
+        $depth = $request->getQueryParams()['depth'] ? (int)$request->getQueryParams()['depth'] : 2;
+        $userGroup = (string)$request->getParsedBody()['usergroup'];
+
+        if ($userGroup) {
             // change usergroup
             $uids = $this->getRecursivePageUids($id, $depth);
-            $this->setUsergroupValue($uids, $usergroup);
+            $this->setUserGroupValue($uids, $userGroup);
         }
 
         $view = GeneralUtility::makeInstance(StandaloneView::class);
@@ -65,27 +61,18 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
 
         $view->assign('depth', $depth);
 
-        $depthBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
-            'SET' => [
-                'function' => self::class,
-            ],
+        $depthBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'id' => $id,
             'depth' => '__DEPTH__',
         ]);
         $view->assign('depthBaseUrl', $depthBaseUrl);
 
-        $idBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
-            'SET' => [
-                'function' => self::class,
-            ],
+        $idBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'depth' => $depth,
         ]);
         $view->assign('idBaseUrl', $idBaseUrl);
 
-        $cmdBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('web_func', [
-            'SET' => [
-                'function' => self::class,
-            ],
+        $cmdBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'id' => $id,
             'depth' => $depth,
         ]);
@@ -94,20 +81,26 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
         $depthOptions = [];
         foreach ([1, 2, 3, 4, 10] as $depthLevel) {
             $levelLabel = $depthLevel === 1 ? 'level' : 'levels';
-            $depthOptions[$depthLevel] = $depthLevel . ' ' . LocalizationUtility::translate('LLL:EXT:beuser/Resources/Private/Language/locallang_mod_permission.xlf:' . $levelLabel,
-                    'beuser');
+            $depthOptions[$depthLevel] =
+                $depthLevel . ' ' .
+                LocalizationUtility::translate(
+                    'LLL:EXT:beuser/Resources/Private/Language/locallang_mod_permission.xlf:' . $levelLabel,
+                    'beuser'
+                );
         }
         $view->assign('depthOptions', $depthOptions);
+
 
         $view->assign('LLPrefix', 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:');
 
         $tree = $this->getPageTree($id, $depth);
         $view->assign('viewTree', $tree->tree);
 
-        $view->assign('usergroups', $this->getUsergroups());
+        $view->assign('usergroups', $this->getUserGroups());
         $view->assign('beusers', $this->getBackendUsers());
 
-        return $view->render();
+        $this->moduleTemplate->setContent($view->render());
+        return new HtmlResponse($this->moduleTemplate->renderContent());
     }
 
     /**
@@ -135,7 +128,7 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
             for ($a = $depth; $a > 0; $a--) {
                 if (is_array($tree->ids_hierarchy[$a])) {
                     reset($tree->ids_hierarchy[$a]);
-                    foreach($tree->ids_hierarchy[$a] as $theId){
+                    foreach ($tree->ids_hierarchy[$a] as $theId) {
                         if ($this->checkPermissionsForRow($rows[$theId])) {
                             $uidList[] = $theId;
                         }
@@ -148,16 +141,11 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
 
     }
 
-    /**
-     * Reads the page tree
-     *
-     * @return PageTreeView
-     */
     protected function getPageTree($id, $depth): PageTreeView
     {
         /** @var PageTreeView $tree */
         $tree = GeneralUtility::makeInstance(PageTreeView::class);
-        $tree->init(' AND ' . $this->pObj->perms_clause);
+        $tree->init(' AND ' . $this->getBackendUser()->getPagePermsClause(Permission::PAGE_SHOW));
         $tree->setRecs = 1;
         $tree->makeHTML = true;
         $tree->thisScript = 'index.php';
@@ -233,18 +221,10 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
     }
 
     /**
-     * @return DatabaseConnection
-     */
-    protected function getDatabaseConnection()
-    {
-        return $GLOBALS['TYPO3_DB'];
-    }
-
-    /**
      * @param array $uids
      * @param $value
      */
-    protected function setUsergroupValue(array $uids, $value)
+    protected function setUserGroupValue(array $uids, $value)
     {
         $data = [];
         foreach ($uids as $uid) {
@@ -262,18 +242,22 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
      *
      * @return array
      */
-    public function getUsergroups(): array
+    public function getUserGroups(): array
     {
-        /** @var \TYPO3\CMS\Core\Database\DatabaseConnection $databaseHandle */
-        $databaseHandle = $GLOBALS['TYPO3_DB'];
-        $whereClause = '1=1' . BackendUtility::deleteClause('be_groups') . BackendUtility::BEenableFields('be_groups');
-        $rows = $databaseHandle->exec_SELECTgetRows('*', 'be_groups', $whereClause, '', 'title ASC');
-        $usergroupSelectorOptions = [];
+        $tableName = 'be_groups';
+        $q = $this->getQueryBuilder($tableName);
+        $rows = $q->select('*')
+            ->from($tableName)
+            ->orderBy('title', 'ASC')
+            ->execute()
+            ->fetchAllAssociative();
+
+        $userGroupSelectorOptions = [];
         foreach ($rows as $row) {
-            $usergroupSelectorOptions[$row['uid']] = $row['title'];
+            $userGroupSelectorOptions[$row['uid']] = $row['title'];
         }
 
-        return $usergroupSelectorOptions;
+        return $userGroupSelectorOptions;
     }
 
     /**
@@ -283,15 +267,30 @@ class ManagePermissionsModuleFunctionController extends AbstractFunctionModule
      */
     public function getBackendUsers(): array
     {
-        /** @var \TYPO3\CMS\Core\Database\DatabaseConnection $databaseHandle */
-        $databaseHandle = $GLOBALS['TYPO3_DB'];
-        $whereClause = '1=1' . BackendUtility::deleteClause('be_users') . BackendUtility::BEenableFields('be_users');
-        $rows = $databaseHandle->exec_SELECTgetRows('*', 'be_users', $whereClause, '', 'username ASC');
+        $tableName = 'be_users';
+        $q = $this->getQueryBuilder($tableName);
+        $rows = $q->select('*')
+            ->from($tableName)
+            ->orderBy('username', 'ASC')
+            ->execute()
+            ->fetchAllAssociative();
+
         $beUsers = [];
         foreach ($rows as $row) {
             $beUsers[$row['uid']] = $row['username'];
         }
 
         return $beUsers;
+    }
+
+    /**
+     * @param string $tableName
+     * @return object|QueryBuilder
+     */
+    protected function getQueryBuilder($tableName): QueryBuilder
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        return $connectionPool->getQueryBuilderForTable($tableName);
     }
 }
