@@ -1,13 +1,8 @@
 <?php
 
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use Visol\Permissions\Controller\ManagePermissionsModuleFunctionController;
+use Visol\Permissions\ContextMenu\ManagePermissionsItemProvider;
 if (!defined('TYPO3')) {
     die('Access denied.');
 }
-ExtensionManagementUtility::insertModuleFunction(
-    'web_func',
-    ManagePermissionsModuleFunctionController::class,
-    null,
-    "LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title"
-);
+
+$GLOBALS['TYPO3_CONF_VARS']['BE']['ContextMenu']['ItemProviders'][1668160945] = ManagePermissionsItemProvider::class;
