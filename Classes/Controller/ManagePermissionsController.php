@@ -25,8 +25,6 @@ class ManagePermissionsController
     const PERMISSION_EDIT_PAGE = 2;
 
     /**
-     * ModuleTemplate object
-     *
      * @var ModuleTemplate
      */
     protected $moduleTemplate;
@@ -108,9 +106,6 @@ class ManagePermissionsController
      *
      * @param $id
      * @param $depth
-     *
-     * @return array
-     * @throws \Exception
      */
     protected function getRecursivePageUids($id, $depth): array
     {
@@ -138,7 +133,6 @@ class ManagePermissionsController
         }
 
         return $uidList;
-
     }
 
     protected function getPageTree($id, $depth): PageTreeView
@@ -172,8 +166,6 @@ class ManagePermissionsController
     /**
      * Get rows from PageTreeView. Use uid as key
      *
-     * @param PageTreeView $tree
-     * @return array
      * @throws \Exception
      */
     protected function getRowsFromPageTree(PageTreeView $tree): array
@@ -212,19 +204,12 @@ class ManagePermissionsController
         return false;
     }
 
-    /**
-     * @return BackendUserAuthentication
-     */
     protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
     }
 
-    /**
-     * @param array $uids
-     * @param $value
-     */
-    protected function setUserGroupValue(array $uids, $value)
+    protected function setUserGroupValue(array $uids, string $value)
     {
         $data = [];
         foreach ($uids as $uid) {
@@ -239,8 +224,6 @@ class ManagePermissionsController
 
     /**
      * Get a select option for each user group
-     *
-     * @return array
      */
     public function getUserGroups(): array
     {
@@ -262,8 +245,6 @@ class ManagePermissionsController
 
     /**
      * Get a select option for each user group
-     *
-     * @return array
      */
     public function getBackendUsers(): array
     {
@@ -283,11 +264,7 @@ class ManagePermissionsController
         return $beUsers;
     }
 
-    /**
-     * @param string $tableName
-     * @return object|QueryBuilder
-     */
-    protected function getQueryBuilder($tableName): QueryBuilder
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
