@@ -9,7 +9,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class ManagePermissionsItemProvider extends RecordProvider
 {
     protected $itemsConfiguration = [
-        'pages_permissions' => [
+        'pagesPermissions' => [
             'type' => 'item',
             'label' => 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title',
             'iconIdentifier' => 'actions-lock',
@@ -24,7 +24,7 @@ class ManagePermissionsItemProvider extends RecordProvider
 
     public function getPriority(): int
     {
-        return 60;
+        return 46;
     }
 
     protected function getAdditionalAttributes(string $itemName): array
@@ -45,9 +45,8 @@ class ManagePermissionsItemProvider extends RecordProvider
 
         if (isset($items['more'])) {
             $items['more']['childItems'] +=  $localItems; // we merge the item at the end
-        } else {
-            $items = $items + $localItems;
         }
+
         //passes array of items to the next item provider
         return $items;
     }
@@ -60,7 +59,7 @@ class ManagePermissionsItemProvider extends RecordProvider
         }
         $canRender = false;
         switch ($itemName) {
-            case 'pages_permissions':
+            case 'pagesPermissions':
                 $canRender = $this->canShow();
                 break;
         }
@@ -69,6 +68,6 @@ class ManagePermissionsItemProvider extends RecordProvider
 
     protected function canShow(): bool
     {
-        return true;
+        return $this->context === 'tree';
     }
 }
