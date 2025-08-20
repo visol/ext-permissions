@@ -22,13 +22,9 @@ use TYPO3\CMS\Fluid\View\StandaloneView;
 
 class ManagePermissionsController
 {
-    const PERMISSION_EDIT_PAGE = 2;
+    const int PERMISSION_EDIT_PAGE = 2;
 
-    /**
-     * @var ModuleTemplate
-     */
-    protected $moduleTemplate;
-
+    protected ModuleTemplate $moduleTemplate;
     protected IconFactory $iconFactory;
     protected ModuleTemplateFactory $moduleTemplateFactory;
 
@@ -40,41 +36,36 @@ class ManagePermissionsController
 
     public function mainAction(ServerRequestInterface $request): ResponseInterface
     {
-        $this->moduleTemplate = $this->moduleTemplateFactory->create($request);
+        $moduleTemplate = $this->moduleTemplateFactory->create($request);
 
         $id = (int)$request->getQueryParams()['id'];
         $depth = $request->getQueryParams()['depth'] ? (int)$request->getQueryParams()['depth'] : 2;
         $userGroup = (string)$request->getParsedBody()['usergroup'];
 
-        if ($userGroup) {
+        if ($userGroup !== '' && $userGroup !== '0') {
             // change usergroup
             $uids = $this->getRecursivePageUids($id, $depth);
             $this->setUserGroupValue($uids, $userGroup);
         }
 
-        $view = GeneralUtility::makeInstance(StandaloneView::class);
-        $view->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName(
-            'EXT:permissions/Resources/Private/Templates/Index.html'
-        ));
-
-        $view->assign('depth', $depth);
+        $moduleTemplate->assign('depth', $depth);
 
         $depthBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'id' => $id,
             'depth' => '__DEPTH__',
         ]);
-        $view->assign('depthBaseUrl', $depthBaseUrl);
+        $moduleTemplate->assign('depthBaseUrl', $depthBaseUrl);
 
         $idBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'depth' => $depth,
         ]);
-        $view->assign('idBaseUrl', $idBaseUrl);
+        $moduleTemplate->assign('idBaseUrl', $idBaseUrl);
 
         $cmdBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
             'id' => $id,
             'depth' => $depth,
         ]);
-        $view->assign('cmdBaseUrl', $cmdBaseUrl);
+        $moduleTemplate->assign('cmdBaseUrl', $cmdBaseUrl);
 
         $depthOptions = [];
         foreach ([1, 2, 3, 4, 10] as $depthLevel) {
@@ -86,23 +77,22 @@ class ManagePermissionsController
                     'beuser'
                 );
         }
-        $view->assign('depthOptions', $depthOptions);
+        $moduleTemplate->assign('depthOptions', $depthOptions);
 
 
-        $view->assign('LLPrefix', 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:');
+        $moduleTemplate->assign('LLPrefix', 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:');
 
         $tree = $this->getPageTree($id, $depth);
-        $view->assign('viewTree', $tree->tree);
+        $moduleTemplate->assign('viewTree', $tree->tree);
 
-        $view->assign('usergroups', $this->getUserGroups());
-        $view->assign('beusers', $this->getBackendUsers());
+        $moduleTemplate->assign('usergroups', $this->getUserGroups());
+        $moduleTemplate->assign('beusers', $this->getBackendUsers());
 
-        $this->moduleTemplate->setContent($view->render());
-        return new HtmlResponse($this->moduleTemplate->renderContent());
+        return $moduleTemplate->renderResponse('Index');
     }
 
     /**
-     * Return an array of page id's where the user have access to
+     * Return an array of page ids where the user have access to
      *
      * @param $id
      * @param $depth
@@ -149,12 +139,12 @@ class ManagePermissionsController
         $tree->addField('perms_group');
         $tree->addField('perms_everybody');
 
-        if ($id) {
+        if ($id !== 0) {
             $pageInfo = BackendUtility::readPageAccess($id, ' 1=1');
-            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getIcon($id)];
+//            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getIcon($id)];
         } else {
             $pageInfo = ['title' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'], 'uid' => 0, 'pid' => 0];
-            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getRootIcon($pageInfo)];
+//            $tree->tree[] = ['row' => $pageInfo, 'HTML' => $tree->getRootIcon($pageInfo)];
         }
 
         $tree->getTree($id, $depth, '');
@@ -196,12 +186,7 @@ class ManagePermissionsController
         if ($this->getBackendUser()->isAdmin()) {
             return true;
         }
-
-        if ($this->getBackendUser()->doesUserHaveAccess($row, self::PERMISSION_EDIT_PAGE)) {
-            return true;
-        }
-
-        return false;
+        return $this->getBackendUser()->doesUserHaveAccess($row, self::PERMISSION_EDIT_PAGE);
     }
 
     protected function getBackendUser(): BackendUserAuthentication
@@ -230,9 +215,7 @@ class ManagePermissionsController
         $tableName = 'be_groups';
         $q = $this->getQueryBuilder($tableName);
         $rows = $q->select('*')
-            ->from($tableName)
-            ->orderBy('title', 'ASC')
-            ->execute()
+            ->from($tableName)->orderBy('title', 'ASC')->executeQuery()
             ->fetchAllAssociative();
 
         $userGroupSelectorOptions = [];
@@ -251,9 +234,7 @@ class ManagePermissionsController
         $tableName = 'be_users';
         $q = $this->getQueryBuilder($tableName);
         $rows = $q->select('*')
-            ->from($tableName)
-            ->orderBy('username', 'ASC')
-            ->execute()
+            ->from($tableName)->orderBy('username', 'ASC')->executeQuery()
             ->fetchAllAssociative();
 
         $beUsers = [];

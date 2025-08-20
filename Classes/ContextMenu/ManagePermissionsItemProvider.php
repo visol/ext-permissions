@@ -2,11 +2,12 @@
 
 namespace Visol\Permissions\ContextMenu;
 
-use TYPO3\CMS\Backend\ContextMenu\ItemProviders\RecordProvider;
+use TYPO3\CMS\Backend\ContextMenu\ItemProviders\PageProvider;
+use TYPO3\CMS\Backend\ContextMenu\ItemProviders\ProviderInterface;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class ManagePermissionsItemProvider extends RecordProvider
+class ManagePermissionsItemProvider extends PageProvider implements ProviderInterface
 {
     protected $itemsConfiguration = [
         'pagesPermissions' => [
@@ -30,9 +31,15 @@ class ManagePermissionsItemProvider extends RecordProvider
     protected function getAdditionalAttributes(string $itemName): array
     {
         $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
+        $url = (string) $uriBuilder->buildUriFromRoute(
+            'pages_permissions',
+            [
+                'id' => $this->record['uid'] ?? 0,
+            ]
+        );
         return [
-            'data-callback-module' => 'TYPO3/CMS/Permissions/ContextMenuActions',
-            'data-pages-new-multiple-url' => (string)$uriBuilder->buildUriFromRoute('pages_permissions', ['id' => $this->record['uid'] ?? 0]),
+            'data-callback-module' => '@visol/Permissions/ContextMenuActions',
+            'data-pages-new-multiple-url' => $url,
         ];
     }
 
@@ -57,13 +64,10 @@ class ManagePermissionsItemProvider extends RecordProvider
         if (in_array($itemName, $this->disabledItems, true)) {
             return false;
         }
-        $canRender = false;
-        switch ($itemName) {
-            case 'pagesPermissions':
-                $canRender = $this->canShow();
-                break;
+        if ($itemName === 'pagesPermissions') {
+            return $this->canShow();
         }
-        return $canRender;
+        return false;
     }
 
     protected function canShow(): bool
