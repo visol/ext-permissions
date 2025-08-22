@@ -63,7 +63,8 @@
 
                                 <td style="text-align: left" class="nowrap">
                                     <a href="{idBaseUrl}&id={data.row.uid}">
-                                        <f:format.raw>{data.depthData}{data.HTML}</f:format.raw>
+                                        {data.depthData -> f:format.raw()}{data.HTML -> f:format.raw()}
+                                        <f:if condition="{data.icon}">{data.icon -> f:format.raw()}</f:if>
                                         {data.row.title -> f:format.crop(maxCharacters:40)}
                                     </a>
                                 </td>
