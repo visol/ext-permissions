@@ -53,22 +53,9 @@ class ManagePermissionsController
 
         $moduleTemplate->assign('depth', $depth);
 
-        $depthBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
-            'id' => $id,
-            'depth' => '__DEPTH__',
-        ]);
-        $moduleTemplate->assign('depthBaseUrl', $depthBaseUrl);
-
-        $idBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
-            'depth' => $depth,
-        ]);
-        $moduleTemplate->assign('idBaseUrl', $idBaseUrl);
-
-        $cmdBaseUrl = GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', [
-            'id' => $id,
-            'depth' => $depth,
-        ]);
-        $moduleTemplate->assign('cmdBaseUrl', $cmdBaseUrl);
+        $moduleTemplate->assign('depthBaseUrl', $this->generateUrl(['id' => $id, 'depth' => '__DEPTH__']));
+        $moduleTemplate->assign('idBaseUrl', $this->generateUrl(['depth' => $depth]));
+        $moduleTemplate->assign('cmdBaseUrl', $this->generateUrl(['id' => $id, 'depth' => $depth]));
 
         $depthOptions = [];
         foreach ([1, 2, 3, 4, 10] as $depthLevel) {
@@ -92,6 +79,19 @@ class ManagePermissionsController
         $moduleTemplate->assign('beusers', $this->getBackendUsers());
 
         return $moduleTemplate->renderResponse('Index');
+    }
+
+    protected function generateUrl(array $config): string
+    {
+        $mergedConfiguration = array_merge(
+            [
+                'SET' => [
+                    'function' => self::class,
+                ],
+            ],
+            $config
+        );
+        return GeneralUtility::makeInstance(UriBuilder::class)->buildUriFromRoute('pages_permissions', $mergedConfiguration);
     }
 
     /**

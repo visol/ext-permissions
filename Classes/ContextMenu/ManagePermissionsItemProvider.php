@@ -14,7 +14,7 @@ class ManagePermissionsItemProvider extends PageProvider implements ProviderInte
             'type' => 'item',
             'label' => 'LLL:EXT:permissions/Resources/Private/Language/locallang.xlf:title',
             'iconIdentifier' => 'actions-lock',
-            'callbackAction' => 'pagePermissions'
+            'callbackAction' => 'pagePermissions',
         ]
     ];
 
