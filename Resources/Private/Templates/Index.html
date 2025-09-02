@@ -1,7 +1,7 @@
 <f:layout name="Module"/>
 
 <f:section name="Content">
-        <f:be.pageRenderer includeJavaScriptModules="{0:'@visol/Permissions/ChangeActions.js'}"/>
+    <f:be.pageRenderer includeJavaScriptModules="{0:'@visol/Permissions/ChangeActions.js'}"/>
 
     <h1>
         <f:translate key="{LLPrefix}title"/>
@@ -85,7 +85,6 @@
         </div>
 
         <form action="{cmdBaseUrl}" method="post">
-            <f:debug>{cmdBaseUrl}</f:debug>
             <div class="form-group">
                 <label for="usergroup">
                     <f:translate key="{LLPrefix}group"/>

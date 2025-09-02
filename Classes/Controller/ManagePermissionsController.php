@@ -205,7 +205,7 @@ class ManagePermissionsController
         return $GLOBALS['BE_USER'];
     }
 
-    protected function setUserGroupValue(array $uids, string $value)
+    protected function setUserGroupValue(array $uids, string $value): void
     {
         $data = [];
         foreach ($uids as $uid) {
